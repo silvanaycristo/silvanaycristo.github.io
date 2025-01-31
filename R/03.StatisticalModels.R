@@ -25,6 +25,7 @@ vd <- ExploreModelMatrix::VisualizeDesign(
   textSizeFitted = 4
 )
 
+
 ## Veamos las imágenes
 cowplot::plot_grid(plotlist = vd$plotlist)
 
