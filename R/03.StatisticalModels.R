@@ -116,6 +116,9 @@ vd <- VisualizeDesign(sampleData = sampleData,
                       dropCols = "conditionko_minus")
 cowplot::plot_grid(plotlist = vd$plotlist, ncol = 1)
 
+## El intercepto da un grupo de referencia que se debe eliminar.
+## El planteamiento de la pregunta biológica es fundamental.
+
 ## ----EMM_example1_interactive, eval = FALSE-------------------
 # ## Usaremos shiny otra ves
 app <- ExploreModelMatrix::ExploreModelMatrix(
@@ -142,11 +145,17 @@ assay(rse_gene_SRP045638, "counts") <- compute_read_counts(rse_gene_SRP045638)
 ## ----describe_issue-------------------------------------------
 rse_gene_SRP045638$sra.sample_attributes[1:3]
 
+## dev_stage;;Fetal se encuentra solamente en el primer output. Hay que eliminarla.
 
 ## ----solve_issue----------------------------------------------
-rse_gene_SRP045638$sra.sample_attributes <- gsub("dev_stage;;Fetal\\|", "", rse_gene_SRP045638$sra.sample_attributes)
+rse_gene_SRP045638$sra.sample_attributes <- gsub(
+  "dev_stage;;Fetal\\|",
+  "",
+  rse_gene_SRP045638$sra.sample_attributes
+  )
 rse_gene_SRP045638$sra.sample_attributes[1:3]
 
+## Limpieza de datos.
 
 ## ----attributes-----------------------------------------------
 rse_gene_SRP045638 <- expand_sra_attributes(rse_gene_SRP045638)
@@ -233,6 +242,8 @@ ggplot(as.data.frame(colData(rse_gene_SRP045638)), aes(y = assigned_gene_prop, x
   ylab("Assigned Gene Prop") +
   xlab("Age Group")
 
+## Para hacer el análisis de expresión, hay que definir el modelo estadístico.
+
 
 ## ----statiscal_model------------------------------------------
 mod <- model.matrix(~ prenatal + sra_attribute.RIN + sra_attribute.sex + assigned_gene_prop,
@@ -242,7 +253,7 @@ colnames(mod)
 
 
 ## ----run_limma------------------------------------------------
-library("limma")
+library("limma") ## Se le pasa el objeto de dg list
 vGene <- voom(dge, mod, plot = TRUE)
 
 eb_results <- eBayes(lmFit(vGene))
@@ -254,13 +265,17 @@ de_results <- topTable(
   sort.by = "none"
 )
 dim(de_results)
-head(de_results)
+head
+
 
 ## Genes diferencialmente expresados entre pre y post natal con FDR < 5%
 table(de_results$adj.P.Val < 0.05)
 
 ## Visualicemos los resultados estadísticos
 plotMA(eb_results, coef = 2)
+
+## Un valor positivo en el log-fold es un gen con mayor expresión en el grupo pre contra el post.
+## prenatalprenatal -> variable y valor de contraste.
 
 volcanoplot(eb_results, coef = 2, highlight = 3, names = de_results$gene_name)
 de_results[de_results$gene_name %in% c("ZSCAN2", "VASH2", "KIAA0922"), ]
